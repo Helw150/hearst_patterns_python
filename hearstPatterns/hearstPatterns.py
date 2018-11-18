@@ -114,8 +114,8 @@ class HearstPatterns(object):
                     else:
                         general = nps[-1]
                         specifics = nps[:-1]
-                        print(str(general))
-                        print(str(nps))
+                        #print(str(general))
+                        #print(str(nps))
 
                     for i in range(len(specifics)):
                         #print("%s, %s" % (specifics[i], general))
