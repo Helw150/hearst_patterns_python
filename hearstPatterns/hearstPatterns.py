@@ -62,10 +62,14 @@ class HearstPatterns(object):
                 ('(NP_\\w+ (, )? (NP_\\w+ ? (, )?(and |or )?)+ for instance)', 'first'),
                 ('((NP_\\w+ ?(, )?)+(and |or )?sort of NP_\\w+)', 'last')
             ])
-
-        self.__spacy_nlp = spacy.load('en')
         
     def chunk(self, rawtext):
+        global nlp
+        try:
+            self.__spacy_nlp = spacy.load('en')
+        except:
+            nlp = spacy.load('en')
+            self.__spacy_nlp = spacy.load('en')
         doc = self.__spacy_nlp(rawtext)
         chunks = []
         for sentence in doc.sents:
