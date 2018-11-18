@@ -6,13 +6,7 @@ import nltk
 class HearstPatterns(object):
 
     def __init__(self, extended = False):
-        self.__chunk_patterns = r""" #  helps us find noun phrase chunks
-                NP: {<DT|PP\$>?<JJ>*<NN>+}
-                    {<NNP>+}
-                    {<NNS>+}
-        """
-
-        self.__np_chunker = nltk.RegexpParser(self.__chunk_patterns) # create a chunk parser 
+        self.__adj_stopwords = ['able', 'available', 'brief', 'certain', 'different', 'due', 'enough', 'especially','few', 'fifth', 'former', 'his', 'howbeit', 'immediate', 'important', 'inc', 'its', 'last', 'latter', 'least', 'less', 'likely', 'little', 'many', 'ml', 'more', 'most', 'much', 'my', 'necessary', 'new', 'next', 'non', 'old', 'other', 'our', 'ours', 'own', 'particular', 'past', 'possible', 'present', 'proud', 'recent', 'same', 'several', 'significant', 'similar', 'such', 'sup', 'sure']
 
         # now define the Hearst patterns
         # format is <hearst-pattern>, <general-term>
@@ -72,63 +66,22 @@ class HearstPatterns(object):
 
         self.__spacy_nlp = spacy.load('en')
         
-    def prepare(self, rawtext):
-        doc = self.__spacy_nlp(rawtext)
-        sentences = [[(token.lemma_, token.tag_) for token in sent] for sent in doc.sents] # Spacy Sentence Tokens
-
-        return sentences
-
     def chunk(self, rawtext):
-        sentences = self.prepare(rawtext.strip())
-
-        all_chunks = []
-        for sentence in sentences:
-            chunks = self.__np_chunker.parse(sentence) # parse the example sentence
-            #for chunk in chunks:
-            #   print(str(chunk))
-            all_chunks.append(self.prepare_chunks(chunks))
-        return all_chunks
-
-    def prepare_chunks(self, chunks):
-        # basically, if the chunk is NP, keep it as a string taht starts w/ NP and replace " " with _
-        # otherwise, keep the word.
-        # remove punct
-        # this is all done to make it super easy to apply the Hearst patterns...
-
-        terms = []
-        for chunk in chunks:
-            label = None
-            try: # gross hack to see if the chunk is simply a word or a NP, as we want. But non-NP fail on this method call
-                label = chunk.label()
-            except:
-                pass
-
-            if label is None: #means one word...
-                token = chunk[0]
-                pos = chunk[1]
-                if pos in ['.', ':', '-', '_']:
-                    continue
-                terms.append(token)
-            else:
-                np = "NP_"+"_".join([a[0] for a in chunk]) #This makes it easy to apply the Hearst patterns later
-                terms.append(np)
-        return ' '.join(terms)
-
-    def replace_np_sequences(self, sentence):
-        words = ""
-        first_word_in_sequence = False
-        for word in nltk.word_tokenize(sentence.replace("NP_", "_")):
-            if word[0] == "_":
-                if not first_word_in_sequence:
-                    word = "NP" + word
-                    first_word_in_sequence = True
-                    words = words + " " + word
-                else:
-                    words += word
-            else:
-                words = words + " " + word
-                first_word_in_sequence = False
-        return words.strip()
+        doc = self.__spacy_nlp(rawtext)
+        chunks = []
+        for sentence in doc.sents:
+            sentence_text = sentence.lemma_
+            for chunk in sentence.noun_chunks:
+                chunk_arr = []
+                for token in chunk:
+                    if token.is_punct or token.lemma_ in self.__adj_stopwords:
+                        continue
+                    chunk_arr.append(token.lemma_)
+                chunk_lemma = " ".join(chunk_arr)
+                replacement_value = "NP_"+"_".join(chunk_arr)
+                sentence_text = sentence_text.replace(chunk_lemma, replacement_value)
+            chunks.append(sentence_text)
+        return chunks
 
     """
         This is the main entry point for this code.
@@ -141,12 +94,8 @@ class HearstPatterns(object):
         hyponyms = []
         np_tagged_sentences = self.chunk(rawtext)
 
-        for raw_sentence in np_tagged_sentences:
+        for sentence in np_tagged_sentences:
             # two or more NPs next to each other should be merged into a single NP, it's a chunk error
-
-            # find any N consecutive NP_ and merge them into one...
-            # So, something like: "NP_foo NP_bar blah blah" becomes "NP_foo_bar blah blah"
-            sentence = self.replace_np_sequences(raw_sentence)
 
             for (hearst_pattern, parser) in self.__hearst_patterns:
                 matches = re.search(hearst_pattern, sentence)
