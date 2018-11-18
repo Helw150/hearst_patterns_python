@@ -1,7 +1,7 @@
 import re
 import string
+import spacy
 import nltk
-from nltk.tag.perceptron import PerceptronTagger
 
 class HearstPatterns(object):
 
@@ -19,71 +19,62 @@ class HearstPatterns(object):
         # so, what this means is that if you apply the first pattern, the firsr Noun Phrase (NP)
         # is the general one, and the rest are specific NPs
         self.__hearst_patterns = [
-                ("(NP_\w+ (, )?such as (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(such NP_\w+ (, )?as (NP_\w+ ?(, )?(and |or )?)+)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )?other NP_\w+)", "last"),
-                ("(NP_\w+ (, )?including (NP_\w+ ?(, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?especially (NP_\w+ ?(, )?(and |or )?)+)", "first"),
-            ]
+            ('(NP_\\w+ (, )?such as (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+            ('(such NP_\\w+ (, )?as (NP_\\w+ ?(, )?(and |or )?)+)', 'first'),
+            ('((NP_\\w+ ?(, )?)+(and |or )?other NP_\\w+)', 'last'),
+            ('(NP_\\w+ (, )?include (NP_\\w+ ?(, )?(and |or )?)+)', 'first'),
+            ('(NP_\\w+ (, )?especially (NP_\\w+ ?(, )?(and |or )?)+)', 'first'),
+        ]
 
         if extended:
             self.__hearst_patterns.extend([
-                ("((NP_\w+ ?(, )?)+(and |or )?any other NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?some other NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?is a NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?was a NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?were a NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?are a NP_\w+)", "last"),
-                ("(NP_\w+ (, )?like (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("such (NP_\w+ (, )?as (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )?like other NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?one of the NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?one of these NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?one of those NP_\w+)", "last"),
-                ("examples of (NP_\w+ (, )?is (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("examples of (NP_\w+ (, )?are (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )?are examples of NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?is example of NP_\w+)", "last"),
-                ("(NP_\w+ (, )?for example (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )?wich is called NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?which is named NP_\w+)", "last"),
-                ("(NP_\w+ (, )?mainly (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?mostly (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?notably (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?particularly (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?principally (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?in particular (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?except (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?other than (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?e.g. (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?i.e. (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )?a kind of NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?kinds of NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?form of NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?forms of NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?which looks like NP_\w+)", "last"),
-                ("((NP_\w+ ?(, )?)+(and |or )?which sounds like NP_\w+)", "last"),
-                ("(NP_\w+ (, )?which are similar to (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?which is similar to (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?examples of this is (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?examples of this are (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?types (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )? NP_\w+ types)", "last"),
-                ("(NP_\w+ (, )?whether (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(compare (NP_\w+ ?(, )?)+(and |or )?with NP_\w+)", "last"),
-                ("(NP_\w+ (, )?compared to (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("(NP_\w+ (, )?among them (NP_\w+ ? (, )?(and |or )?)+)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )?as NP_\w+)", "last"),
-                ("(NP_\w+ (, )? (NP_\w+ ? (, )?(and |or )?)+ for instance)", "first"),
-                ("((NP_\w+ ?(, )?)+(and |or )?sort of NP_\w+)", "last"),
+                ('((NP_\\w+ ?(, )?)+(and |or )?any other NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?some other NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?be a NP_\\w+)', 'last'),
+                ('(NP_\\w+ (, )?like (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('such (NP_\\w+ (, )?as (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?like other NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?one of the NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?one of these NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?one of those NP_\\w+)', 'last'),
+                ('example of (NP_\\w+ (, )?be (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?be example of NP_\\w+)', 'last'),
+                ('(NP_\\w+ (, )?for example (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?wich be call NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?which be name NP_\\w+)', 'last'),
+                ('(NP_\\w+ (, )?mainly (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?mostly (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?notably (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?particularly (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?principally (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?in particular (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?except (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?other than (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?e.g. (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?i.e. (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?a kind of NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?kind of NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?form of NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?which look like NP_\\w+)', 'last'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?which sound like NP_\\w+)', 'last'),
+                ('(NP_\\w+ (, )?which be similar to (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?example of this be (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?type (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('((NP_\\w+ ?(, )?)+(and |or )? NP_\\w+ type)', 'last'),
+                ('(NP_\\w+ (, )?whether (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(compare (NP_\\w+ ?(, )?)+(and |or )?with NP_\\w+)', 'last'),
+                ('(NP_\\w+ (, )?compare to (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('(NP_\\w+ (, )?among -PRON- (NP_\\w+ ? (, )?(and |or )?)+)', 'first'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?as NP_\\w+)', 'last'),
+                ('(NP_\\w+ (, )? (NP_\\w+ ? (, )?(and |or )?)+ for instance)', 'first'),
+                ('((NP_\\w+ ?(, )?)+(and |or )?sort of NP_\\w+)', 'last')
             ])
 
-        self.__pos_tagger = PerceptronTagger()
+        self.__spacy_nlp = spacy.load('en')
         
     def prepare(self, rawtext):
-        sentences = nltk.sent_tokenize(rawtext.strip()) # NLTK default sentence segmenter
-        sentences = [nltk.word_tokenize(sent) for sent in sentences] # NLTK word tokenizer
-        sentences = [self.__pos_tagger.tag(sent) for sent in sentences] # NLTK POS tagger
+        doc = self.__spacy_nlp(rawtext)
+        sentences = [[(token.lemma_, token.tag_) for token in sent] for sent in doc.sents] # Spacy Sentence Tokens
 
         return sentences
 
