@@ -1,7 +1,6 @@
 import re
 import string
 import spacy
-import nltk
 
 class HearstPatterns(object):
 
@@ -74,6 +73,7 @@ class HearstPatterns(object):
             for chunk in sentence.noun_chunks:
                 chunk_arr = []
                 for token in chunk:
+                    # Ignore Punctuation and stopword adjectives (generally quantifiers of plurals)
                     if token.is_punct or token.lemma_ in self.__adj_stopwords:
                         continue
                     chunk_arr.append(token.lemma_)
