@@ -5,7 +5,7 @@ import spacy
 class HearstPatterns(object):
 
     def __init__(self, extended = False):
-        self.__adj_stopwords = ['able', 'available', 'brief', 'certain', 'different', 'due', 'enough', 'especially','few', 'fifth', 'former', 'his', 'howbeit', 'immediate', 'important', 'inc', 'its', 'last', 'latter', 'least', 'less', 'likely', 'little', 'many', 'ml', 'more', 'most', 'much', 'my', 'necessary', 'new', 'next', 'non', 'old', 'other', 'our', 'ours', 'own', 'particular', 'past', 'possible', 'present', 'proud', 'recent', 'same', 'several', 'significant', 'similar', 'such', 'sup', 'sure']
+        self.__adj_stopwords = ['a', 'the', 'able', 'available', 'brief', 'certain', 'different', 'due', 'enough', 'especially','few', 'fifth', 'former', 'his', 'howbeit', 'immediate', 'important', 'inc', 'its', 'last', 'latter', 'least', 'less', 'likely', 'little', 'many', 'ml', 'more', 'most', 'much', 'my', 'necessary', 'new', 'next', 'non', 'old', 'other', 'our', 'ours', 'own', 'particular', 'past', 'possible', 'present', 'proud', 'recent', 'same', 'several', 'significant', 'similar', 'such', 'sup', 'sure']
 
         # now define the Hearst patterns
         # format is <hearst-pattern>, <general-term>
@@ -62,11 +62,16 @@ class HearstPatterns(object):
                 ('(NP_\\w+ (, )? (NP_\\w+ ? (, )?(and |or )?)+ for instance)', 'first'),
                 ('((NP_\\w+ ?(, )?)+(and |or )?sort of NP_\\w+)', 'last')
             ])
-
-        self.__spacy_nlp = spacy.load('en')
         
     def chunk(self, rawtext):
-        doc = self.__spacy_nlp(rawtext)
+        global nlp
+        try:
+            self.__spacy_nlp = nlp
+            doc = self.__spacy_nlp(rawtext)
+        except:
+            nlp = spacy.load('en')
+            self.__spacy_nlp = nlp
+            doc = self.__spacy_nlp(rawtext)
         chunks = []
         for sentence in doc.sents:
             sentence_text = sentence.lemma_
